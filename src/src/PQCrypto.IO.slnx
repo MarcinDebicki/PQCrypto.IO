@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="PQCrypto.IO.ExampleOfUse/PQCrypto.IO.POC.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="PQCrypto.IO.Tests/PQCrypto.IO.Tests.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="PQCrypto.IO/PQCrypto.IO.csproj">
+    <Platform Project="x64" />
+  </Project>
+</Solution>

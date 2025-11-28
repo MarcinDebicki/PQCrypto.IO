@@ -1,0 +1,74 @@
+io.pqcrypto.liboqs – Commercial License Agreement
+Version 0.15.0.1
+
+This Commercial License Agreement ("Agreement") is a legal agreement between
+you (either an individual or a single legal entity) ("Licensee") and
+Marcin Dębicki ("Licensor") for the use of the software library
+"io.pqcrypto.liboqs" version 0.15.0.1 (the "Software").
+
+By purchasing this commercial license and/or using the Software under its terms,
+you indicate your acceptance of this Agreement.
+
+1. License Grant
+   Subject to payment of the license fee (50 EUR per developer seat) and compliance
+   with this Agreement, Licensor grants Licensee a non-exclusive, non-transferable,
+   perpetual, worldwide license to use the Software (version 0.15.0.1 only) to:
+   • incorporate it into proprietary applications,
+   • modify it for internal use,
+   • distribute it in binary or object form only as part of Licensee's own applications.
+
+   This license covers exactly version 0.15.0.1. Future versions require separate purchase.
+
+2. License Fee
+   The commercial license fee is 50 EUR per named developer.
+   Price includes all applicable taxes for purchases from Poland.
+   No VAT is charged due to the seller using the VAT exemption for small entrepreneurs
+   (art. 113 ust. 1 of the Polish VAT Act).
+   Invoice/receipt will be issued without VAT.
+
+3. Permitted Uses
+   • Unlimited internal use and deployment within Licensee’s organization
+   • Distribution of the Software in binary form as part of Licensee’s commercial products
+   • Creation of derivative works for Licensee’s own use
+
+4. Restrictions
+   Licensee may NOT:
+   • Distribute the Software on a standalone basis
+   • Distribute or disclose the source code (modified or unmodified)
+   • Use the Software to create a competing library offered under an open-source license
+   • Remove or alter copyright or license notices
+
+5. No GPL Copyleft Obligation
+   Use under this commercial license completely removes any obligation under the
+   GNU General Public License that would otherwise require disclosure of source code
+   of Licensee’s applications.
+
+6. Ownership & Copyright
+   The Software is licensed, not sold. Licensor retains all rights, title and interest
+   in the Software. Copyright © 2025 Marcin Dębicki. All rights reserved.
+
+7. No Support or Updates
+   This license does not include technical support, maintenance, or future versions.
+   These may be purchased separately.
+
+8. Termination
+   This license terminates automatically upon any breach. Upon termination,
+   Licensee must cease all use and destroy all copies of the Software.
+
+9. Warranty Disclaimer & Limitation of Liability
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTIES.
+   IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY DAMAGES WHATSOEVER arising
+   from the use or inability to use the Software.
+
+10. Governing Law
+    This Agreement shall be governed by the laws of the Republic of Poland.
+
+11. Contact & Invoicing
+    Licensor: Marcin Dębicki
+    Email: io.pqcrypto@gmail.com
+
+By purchasing and using the Software under this commercial license,
+you acknowledge that you have read, understood, and agree to be bound by
+this Agreement.
+
+Version date: November 2025

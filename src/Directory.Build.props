@@ -1,0 +1,14 @@
+<Project>
+
+  <PropertyGroup>
+    <Authors>Marcin Dębicki</Authors>
+    <ProductName>pqcrypto.lib</ProductName>
+    <TargetFramework>net9.0</TargetFramework>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>CS1700;</NoWarn>
+  </PropertyGroup>
+
+</Project>
