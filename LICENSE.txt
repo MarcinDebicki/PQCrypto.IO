@@ -1,0 +1,11 @@
+﻿io.pqcrypto.liboqs is dual-licensed:
+
+• GNU General Public License v3.0 or later (GPL-3.0-or-later)
+  → see LICENSE.GPL.txt (full text included)
+
+• Commercial proprietary license (50 EUR per developer, version-specific)
+  → see LICENSE.commercial.txt
+  → Purchase at: https://pqcrypto.io/commercial-license
+  → Contact: io.pqcrypto@gmail.com
+
+SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-proprietary-commercial
