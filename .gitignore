@@ -486,3 +486,4 @@ $RECYCLE.BIN/
 /liboqs/openssl/
 /src/pqcrypto.lib/runtimes/android-arm64-v8a/native/liboqs.so
 /liboqs/android-openssl/*
+/src/*.DotSettings
