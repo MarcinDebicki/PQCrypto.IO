@@ -5,7 +5,7 @@
 
 • Commercial proprietary license (50 EUR per developer, version-specific)
   → see LICENSE.commercial.txt
-  → Purchase at: https://pqcrypto.io/commercial-license
+  → Purchase at: https://github.com/MarcinDebicki/PQCrypto.IO/blob/main/LICENSE.commercial.txt
   → Contact: io.pqcrypto@gmail.com
 
 SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-proprietary-commercial
