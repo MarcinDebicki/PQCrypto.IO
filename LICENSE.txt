@@ -1,4 +1,4 @@
-﻿io.pqcrypto.liboqs is dual-licensed:
+PQCrypto.IO is dual-licensed:
 
 • GNU General Public License v3.0 or later (GPL-3.0-or-later)
   → see LICENSE.GPL.txt (full text included)
