@@ -9,6 +9,7 @@
 	<Version>0.15.0.1-fix1</Version>
 	<Authors>Marcin Dębicki</Authors>
 	<Description>Liboqs library wrapper (post-quantum cryptography)</Description>
+	<PackageTags>pqc;post-quantum;crypto;liboqs;kyber;dilithium;mceliece;falcon;kem;signature;des;hqc;sphincs+</PackageTags>
 	<PackageId>PQCrypto.IO</PackageId>
 	<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
