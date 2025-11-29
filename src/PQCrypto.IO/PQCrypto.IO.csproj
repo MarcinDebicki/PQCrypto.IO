@@ -12,8 +12,8 @@
 	<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	<PackageProjectUrl>https://github.com/twoj-repo</PackageProjectUrl>
-	<RepositoryUrl>https://github.com/twoj-repo</RepositoryUrl>
+	<PackageProjectUrl>https://github.com/MarcinDebicki/PQCrypto.IO</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/MarcinDebicki/PQCrypto.IO</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
 
 	<Platforms>x64</Platforms>
