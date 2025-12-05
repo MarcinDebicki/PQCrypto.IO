@@ -1,4 +1,4 @@
-﻿namespace PQCrypto.IO.Internal.Cryptography;
+﻿namespace PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -16,6 +16,7 @@ internal sealed class SphincsPlusShake256fProvider : IDigitalSignatureProvider
     private static readonly Verify VerifyMethod;
 
     public DigitalSignatureAlgorithm DigitalSignatureAlgorithm { get; } = DigitalSignatureAlgorithm.SphincsPlusShake256f;
+    public LibVersion LibVersion { get; } = LibVersion.libopq_0_15_0_1;
 
     static SphincsPlusShake256fProvider()
     {
@@ -52,8 +53,9 @@ internal sealed class SphincsPlusShake256fProvider : IDigitalSignatureProvider
             var keyPair = new DigitalSignatureKeyPair
             {
                 DigitalSignatureAlgorithm = this.DigitalSignatureAlgorithm,
-                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey),
-                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey),
+                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey, this.LibVersion),
+                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey, this.LibVersion),
+                LibVersion = this.LibVersion,
             };
 
             return keyPair;
@@ -66,6 +68,7 @@ internal sealed class SphincsPlusShake256fProvider : IDigitalSignatureProvider
     {
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(privateKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, privateKey.LibVersion);
 
         privateKey.Value.RequireExactLength(nameof(privateKey), OQS_SIG_SPHINCSSHAKE256_F_SIMPLE_CLEAN_CRYPTO_SECRETKEYBYTES);
 
@@ -85,7 +88,7 @@ internal sealed class SphincsPlusShake256fProvider : IDigitalSignatureProvider
             throw new CryptographicException($"{this.DigitalSignatureAlgorithm} produced signature of unexpected length: {signatureLen} (expected {signature.Length})");
         }
 
-        var result = new DigitalSignature(signature);
+        var result = new DigitalSignature(this.DigitalSignatureAlgorithm, this.LibVersion, signature);
 
         return result;
     }
@@ -95,6 +98,8 @@ internal sealed class SphincsPlusShake256fProvider : IDigitalSignatureProvider
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(digitalSignature);
         ArgumentNullException.ThrowIfNull(publicKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, digitalSignature.LibVersion);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, publicKey.LibVersion);
 
         digitalSignature.Value.RequireExactLength(nameof(digitalSignature), OQS_SIG_SPHINCSSHAKE256_F_SIMPLE_CLEAN_CRYPTO_BYTES);
         publicKey.Value.RequireExactLength(nameof(publicKey), OQS_SIG_SPHINCSSHAKE256_F_SIMPLE_CLEAN_CRYPTO_PUBLICKEYBYTES);
@@ -119,25 +124,25 @@ internal sealed class SphincsPlusShake256fProvider : IDigitalSignatureProvider
 
     private static class Linux
     {
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_sphincs_shake_256f_simple_keypair(byte[] publicKey, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_sphincs_shake_256f_simple_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_sphincs_shake_256f_simple_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
     }
 
     private static class Windows
     {
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_sphincs_shake_256f_simple_keypair(byte[] publicKey, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_sphincs_shake_256f_simple_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_sphincs_shake_256f_simple_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace PQCrypto.IO.Internal.Cryptography;
+﻿namespace PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -18,6 +18,7 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
     private static readonly Verify VerifyMethod;
 
     public DigitalSignatureAlgorithm DigitalSignatureAlgorithm { get; } = DigitalSignatureAlgorithm.CrystalsDilithium2;
+    public LibVersion LibVersion { get; } = LibVersion.libopq_0_15_0_1;
 
     static CrystalsDilithium2Provider()
     {
@@ -54,8 +55,9 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
             var keyPair = new DigitalSignatureKeyPair
             {
                 DigitalSignatureAlgorithm = this.DigitalSignatureAlgorithm,
-                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey),
-                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey),
+                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey, this.LibVersion),
+                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey, this.LibVersion),
+                LibVersion = this.LibVersion,
             };
 
             return keyPair;
@@ -68,6 +70,7 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
     {
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(privateKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, privateKey.LibVersion);
 
         privateKey.Value.RequireExactLength(nameof(privateKey), OQS_SIG_DILITHIUM_2_LENGTH_SECRET_KEY);
 
@@ -87,7 +90,7 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
             throw new CryptographicException($"{this.DigitalSignatureAlgorithm} produced signature of unexpected length: {signatureLen} (expected {signature.Length})");
         }
 
-        var result = new DigitalSignature(signature);
+        var result = new DigitalSignature(this.DigitalSignatureAlgorithm, this.LibVersion, signature);
 
         return result;
     }
@@ -97,6 +100,8 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(digitalSignature);
         ArgumentNullException.ThrowIfNull(publicKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, digitalSignature.LibVersion);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, publicKey.LibVersion);
 
         digitalSignature.Value.RequireExactLength(nameof(digitalSignature), OQS_SIG_DILITHIUM_2_LENGTH_SIGNATURE);
         publicKey.Value.RequireExactLength(nameof(publicKey), OQS_SIG_DILITHIUM_2_LENGTH_PUBLIC_KEY);
@@ -121,25 +126,25 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
 
     private static class Linux
     {
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_44_keypair(byte[] publicKey, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_44_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_44_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
     }
 
     private static class Windows
     {
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_44_keypair(byte[] publicKey, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_44_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_44_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
     }
 }

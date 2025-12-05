@@ -1,7 +1,7 @@
 ﻿namespace PQCrypto.IO.Internal;
 
 using System.Collections.Concurrent;
-using PQCrypto.IO.Internal.Cryptography;
+using PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 /// <summary>
 ///     Factory for creating high-level post-quantum Key Encapsulation Mechanism (KEM) providers.
@@ -10,25 +10,36 @@ using PQCrypto.IO.Internal.Cryptography;
 /// </summary>
 public sealed class KeyEncapsulationProviderFactory : IKeyEncapsulationProviderFactory
 {
-    private static readonly ConcurrentDictionary<KeyEncapsulationAlgorithm, IKeyEncapsulationProvider> PROVIDER_CACHE = new();
+    private static readonly ConcurrentDictionary<(KeyEncapsulationAlgorithm, LibVersion), IKeyEncapsulationProvider> PROVIDER_CACHE = new();
 
-    public IKeyEncapsulationProvider Create(KeyEncapsulationAlgorithm algorithm)
+    public IKeyEncapsulationProvider Create(KeyEncapsulationAlgorithm algorithm, LibVersion version = LibVersion.libopq_0_15_0_1)
     {
-        if (PROVIDER_CACHE.TryGetValue(algorithm, out var provider) is false)
+        if (PROVIDER_CACHE.TryGetValue((algorithm, version), out var provider) is false)
         {
-            provider = CreateProviderInstance(algorithm);
-            PROVIDER_CACHE[algorithm] = provider;
+            provider = CreateProviderInstance(algorithm, version);
+            PROVIDER_CACHE[(algorithm, version)] = provider;
         }
 
         return provider;
     }
 
-    private static IKeyEncapsulationProvider CreateProviderInstance(KeyEncapsulationAlgorithm algorithm)
+    private static IKeyEncapsulationProvider CreateProviderInstance(KeyEncapsulationAlgorithm algorithm, LibVersion libVersion)
+    {
+        switch (libVersion)
+        {
+            case LibVersion.libopq_0_15_0_1: return CreateProviderInstance_0_15_0_1(algorithm);
+
+            default:
+                throw new NotSupportedException($"KEM version '{libVersion}' is not supported in this build.");
+        }
+    }
+
+    private static IKeyEncapsulationProvider CreateProviderInstance_0_15_0_1(KeyEncapsulationAlgorithm algorithm)
     {
         switch (algorithm)
         {
             case KeyEncapsulationAlgorithm.ClassicMcEliece348864:
-                return new Providers();
+                return new ClassicMcEliece348864Provider();
             case KeyEncapsulationAlgorithm.ClassicMcEliece460896:
                 return new ClassicMcEliece460896Provider();
             case KeyEncapsulationAlgorithm.ClassicMcEliece6688128:

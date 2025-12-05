@@ -1,7 +1,7 @@
 ﻿namespace PQCrypto.IO.Internal;
 
 using System.Collections.Concurrent;
-using PQCrypto.IO.Internal.Cryptography;
+using PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 /// <summary>
 ///     Factory for creating high-level post-quantum digital signature providers.
@@ -10,20 +10,32 @@ using PQCrypto.IO.Internal.Cryptography;
 /// </summary>
 public sealed class DigitalSignatureProviderFactory : IDigitalSignatureProviderFactory
 {
-    private static readonly ConcurrentDictionary<DigitalSignatureAlgorithm, IDigitalSignatureProvider> PROVIDER_CACHE = new();
+    private static readonly ConcurrentDictionary<(DigitalSignatureAlgorithm, LibVersion), IDigitalSignatureProvider> PROVIDER_CACHE = new();
 
-    public IDigitalSignatureProvider Create(DigitalSignatureAlgorithm algorithm)
+    public IDigitalSignatureProvider Create(DigitalSignatureAlgorithm algorithm, LibVersion libVersion = LibVersion.libopq_0_15_0_1)
     {
-        if (PROVIDER_CACHE.TryGetValue(algorithm, out var provider) is false)
+        if (PROVIDER_CACHE.TryGetValue((algorithm, libVersion), out var provider) is false)
         {
-            provider = CreateProviderInstance(algorithm);
-            PROVIDER_CACHE[algorithm] = provider;
+            provider = this.CreateProviderInstance(algorithm, libVersion);
+            PROVIDER_CACHE[(algorithm, libVersion)] = provider;
         }
 
         return provider;
     }
 
-    private static IDigitalSignatureProvider CreateProviderInstance(DigitalSignatureAlgorithm digitalSignatureAlgorithm)
+    private IDigitalSignatureProvider? CreateProviderInstance(DigitalSignatureAlgorithm algorithm, LibVersion libVersion)
+    {
+        switch (libVersion)
+        {
+            case LibVersion.libopq_0_15_0_1:
+                return CreateProviderInstance_0_15_0_1(algorithm);
+
+            default:
+                throw new NotSupportedException($"Liboqs version '{libVersion}' is not supported.");
+        }
+    }
+
+    private static IDigitalSignatureProvider CreateProviderInstance_0_15_0_1(DigitalSignatureAlgorithm digitalSignatureAlgorithm)
     {
         switch (digitalSignatureAlgorithm)
         {

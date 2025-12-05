@@ -3,5 +3,6 @@
 public interface IKeyEncapsulationPublicKey
 {
     KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; }
+    LibVersion LibVersion { get; }
     byte[] Value { get; }
 }

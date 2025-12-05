@@ -183,7 +183,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var factory = new KeyEncapsulationProviderFactory();
         var provider = factory.Create(keyEncapsulationParameters.KeyEncapsulationAlgorithm);
 
-        var emptyPublicKey = new KeyEncapsulationPublicKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, Array.Empty<byte>());
+        var emptyPublicKey = new KeyEncapsulationPublicKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, Array.Empty<byte>());
 
         // Act & Assert
         Assert.Throws<WrongByteArrayLengthException>(() => provider.Encapsulation(emptyPublicKey));
@@ -196,7 +196,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var factory = new KeyEncapsulationProviderFactory();
         var provider = factory.Create(keyEncapsulationParameters.KeyEncapsulationAlgorithm);
         var value = new byte[10];
-        var invalidPublicKey = new KeyEncapsulationPublicKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, value);
+        var invalidPublicKey = new KeyEncapsulationPublicKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, value);
 
         // Act & Assert
         Assert.Throws<WrongByteArrayLengthException>(() => provider.Encapsulation(invalidPublicKey));
@@ -234,7 +234,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var factory = new KeyEncapsulationProviderFactory();
         var provider = factory.Create(keyEncapsulationParameters.KeyEncapsulationAlgorithm);
         var keyPair = provider.GenerateKeyPair();
-        var emptyCiphertext = new KeyEncapsulationCiphertext(keyEncapsulationParameters.KeyEncapsulationAlgorithm, Array.Empty<byte>());
+        var emptyCiphertext = new KeyEncapsulationCiphertext(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, Array.Empty<byte>());
 
         // Act & Assert
         Assert.Throws<WrongByteArrayLengthException>(() => provider.Decapsulation(emptyCiphertext, keyPair.PrivateKey));
@@ -248,7 +248,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var provider = factory.Create(keyEncapsulationParameters.KeyEncapsulationAlgorithm);
         var keyPair = provider.GenerateKeyPair();
         var encapsulationResult = provider.Encapsulation(keyPair.PublicKey);
-        var emptyPrivateKey = new KeyEncapsulationPrivateKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, Array.Empty<byte>());
+        var emptyPrivateKey = new KeyEncapsulationPrivateKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, Array.Empty<byte>());
 
         // Act & Assert
         Assert.Throws<WrongByteArrayLengthException>(() => provider.Decapsulation(encapsulationResult.KeyEncapsulationCiphertext, emptyPrivateKey));
@@ -261,7 +261,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var factory = new KeyEncapsulationProviderFactory();
         var provider = factory.Create(keyEncapsulationParameters.KeyEncapsulationAlgorithm);
         var keyPair = provider.GenerateKeyPair();
-        var invalidCiphertext = new KeyEncapsulationCiphertext(keyEncapsulationParameters.KeyEncapsulationAlgorithm, new byte[10]);
+        var invalidCiphertext = new KeyEncapsulationCiphertext(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, new byte[10]);
 
         // Act & Assert
         Assert.Throws<WrongByteArrayLengthException>(() => provider.Decapsulation(invalidCiphertext, keyPair.PrivateKey));
@@ -275,7 +275,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var provider = factory.Create(keyEncapsulationParameters.KeyEncapsulationAlgorithm);
         var keyPair = provider.GenerateKeyPair();
         var encapsulationResult = provider.Encapsulation(keyPair.PublicKey);
-        var invalidPrivateKey = new KeyEncapsulationPrivateKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, new byte[10]); // Nieprawidłowa długość
+        var invalidPrivateKey = new KeyEncapsulationPrivateKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, new byte[10]); // Nieprawidłowa długość
 
         // Act & Assert
         Assert.Throws<WrongByteArrayLengthException>(() => provider.Decapsulation(encapsulationResult.KeyEncapsulationCiphertext, invalidPrivateKey));
@@ -294,7 +294,7 @@ public sealed class ProvidersKeyEncapsulationTest
         var corruptedCiphertextBytes = encapsulationResult.KeyEncapsulationCiphertext.Value.ToArray();
         corruptedCiphertextBytes[0] ^= 0xFF;
 
-        var corruptedCiphertext = new KeyEncapsulationCiphertext(keyEncapsulationParameters.KeyEncapsulationAlgorithm, corruptedCiphertextBytes);
+        var corruptedCiphertext = new KeyEncapsulationCiphertext(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, corruptedCiphertextBytes);
 
         // Act & Assert
         // Some algorithms (e.g., HQC) throw an exception, others return a different shared secret.
@@ -325,7 +325,7 @@ public sealed class ProvidersKeyEncapsulationTest
         // We modify the private key (we change one byte)
         var tamperedPrivateKeyBytes = keyPair.PrivateKey.Value.ToArray();
         tamperedPrivateKeyBytes[tamperedPrivateKeyBytes.Length / 2] ^= 0xFF;
-        var tamperedPrivateKey = new KeyEncapsulationPrivateKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, tamperedPrivateKeyBytes);
+        var tamperedPrivateKey = new KeyEncapsulationPrivateKey(keyEncapsulationParameters.KeyEncapsulationAlgorithm, LibVersion.libopq_0_15_0_1, tamperedPrivateKeyBytes);
 
         // Act && Assert  - Some algorithms (e.g., HQC, CrystalsKyber) throw an exception, others sharedSecret should be different
         try

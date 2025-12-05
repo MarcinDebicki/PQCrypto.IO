@@ -1,4 +1,4 @@
-﻿namespace PQCrypto.IO.Internal.Cryptography;
+﻿namespace PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -16,6 +16,7 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
     private static readonly int OQS_KEM_HQC_128_LENGTH_SHARED_SECRET = 64;
 
     public KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; } = KeyEncapsulationAlgorithm.Hqc128;
+    public LibVersion LibVersion { get; } = LibVersion.libopq_0_15_0_1;
 
     static Hqc128Provider()
     {
@@ -44,6 +45,8 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
     {
         ArgumentNullException.ThrowIfNull(keyEncapsulationCiphertext);
         ArgumentNullException.ThrowIfNull(keyEncapsulationPrivateKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, keyEncapsulationCiphertext.LibVersion);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, keyEncapsulationPrivateKey.LibVersion);
 
         keyEncapsulationCiphertext.Value.RequireExactLength(nameof(keyEncapsulationCiphertext), OQS_KEM_HQC_128_LENGTH_CIPHERTEXT);
         keyEncapsulationPrivateKey.Value.RequireExactLength(nameof(keyEncapsulationPrivateKey), OQS_KEM_HQC_128_LENGTH_SECRET_KEY);
@@ -58,7 +61,8 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
                 KeyEncapsulationCiphertext = keyEncapsulationCiphertext,
-                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, plainSessionKey),
+                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKey),
+                LibVersion = this.LibVersion,
             };
 
             return sessionKey;
@@ -70,6 +74,7 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
     public IKeyEncapsulationResult Encapsulation(in IKeyEncapsulationPublicKey publicKey)
     {
         ArgumentNullException.ThrowIfNull(publicKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, publicKey.LibVersion);
 
         publicKey.Value.RequireExactLength(nameof(publicKey), OQS_KEM_HQC_128_LENGTH_PUBLIC_KEY);
 
@@ -83,8 +88,9 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
             var sessionKey = new KeyEncapsulationResult
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
-                KeyEncapsulationCiphertext = new KeyEncapsulationCiphertext(this.KeyEncapsulationAlgorithm, secretSessionKey),
-                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, plainSessionKey),
+                KeyEncapsulationCiphertext = new KeyEncapsulationCiphertext(this.KeyEncapsulationAlgorithm, this.LibVersion, secretSessionKey),
+                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKey),
+                LibVersion = this.LibVersion,
             };
 
             return sessionKey;
@@ -105,8 +111,9 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
             var keyPair = new KeyEncapsulationKeyPair
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
-                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, publicKey),
-                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, privateKey),
+                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, this.LibVersion, publicKey),
+                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, this.LibVersion, privateKey),
+                LibVersion = this.LibVersion,
             };
 
             return keyPair;
@@ -117,25 +124,25 @@ internal sealed class Hqc128Provider : IKeyEncapsulationProvider
 
     private static class Linux
     {
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_128_decaps(byte[] plainSessionKey, byte[] secretSessionKey, byte[] privateKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_128_encaps(byte[] secretSessionKey, byte[] plainSessionKey, byte[] publicKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_128_keypair(byte[] publicKey, byte[] privateKey);
     }
 
     private static class Windows
     {
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_128_decaps(byte[] plainSessionKey, byte[] secretSessionKey, byte[] privateKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_128_encaps(byte[] secretSessionKey, byte[] plainSessionKey, byte[] publicKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_128_keypair(byte[] publicKey, byte[] privateKey);
     }
 }

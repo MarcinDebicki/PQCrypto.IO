@@ -1,23 +1,24 @@
-﻿namespace PQCrypto.IO.Internal.Cryptography;
+﻿namespace PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using PQCrypto.IO.Extensions;
 
-internal sealed class Hqc256Provider : IKeyEncapsulationProvider
+internal sealed class Hqc192Provider : IKeyEncapsulationProvider
 {
     private static readonly Decaps DecapsMethod;
     private static readonly Encaps EncapsMethod;
     private static readonly GenerateKeypair GenerateKeypairMethod;
 
-    private static readonly int OQS_KEM_HQC_256_LENGTH_CIPHERTEXT = 14421;
-    private static readonly int OQS_KEM_HQC_256_LENGTH_PUBLIC_KEY = 7245;
-    private static readonly int OQS_KEM_HQC_256_LENGTH_SECRET_KEY = 7317;
-    private static readonly int OQS_KEM_HQC_256_LENGTH_SHARED_SECRET = 64;
+    private static readonly int OQS_KEM_HQC_192_LENGTH_CIPHERTEXT = 8978;
+    private static readonly int OQS_KEM_HQC_192_LENGTH_PUBLIC_KEY = 4522;
+    private static readonly int OQS_KEM_HQC_192_LENGTH_SECRET_KEY = 4586;
+    private static readonly int OQS_KEM_HQC_192_LENGTH_SHARED_SECRET = 64;
 
-    public KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; } = KeyEncapsulationAlgorithm.Hqc256;
+    public KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; } = KeyEncapsulationAlgorithm.Hqc192;
+    public LibVersion LibVersion { get; } = LibVersion.libopq_0_15_0_1;
 
-    static Hqc256Provider()
+    static Hqc192Provider()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -44,11 +45,13 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
     {
         ArgumentNullException.ThrowIfNull(keyEncapsulationCiphertext);
         ArgumentNullException.ThrowIfNull(keyEncapsulationPrivateKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, keyEncapsulationCiphertext.LibVersion);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, keyEncapsulationPrivateKey.LibVersion);
 
-        keyEncapsulationCiphertext.Value.RequireExactLength(nameof(keyEncapsulationCiphertext), OQS_KEM_HQC_256_LENGTH_CIPHERTEXT);
-        keyEncapsulationPrivateKey.Value.RequireExactLength(nameof(keyEncapsulationPrivateKey), OQS_KEM_HQC_256_LENGTH_SECRET_KEY);
+        keyEncapsulationCiphertext.Value.RequireExactLength(nameof(keyEncapsulationCiphertext), OQS_KEM_HQC_192_LENGTH_CIPHERTEXT);
+        keyEncapsulationPrivateKey.Value.RequireExactLength(nameof(keyEncapsulationPrivateKey), OQS_KEM_HQC_192_LENGTH_SECRET_KEY);
 
-        var plainSessionKey = new byte[OQS_KEM_HQC_256_LENGTH_SHARED_SECRET];
+        var plainSessionKey = new byte[OQS_KEM_HQC_192_LENGTH_SHARED_SECRET];
 
         var apiResult = DecapsMethod(plainSessionKey, keyEncapsulationCiphertext.Value, keyEncapsulationPrivateKey.Value);
 
@@ -58,7 +61,8 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
                 KeyEncapsulationCiphertext = keyEncapsulationCiphertext,
-                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, plainSessionKey),
+                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKey),
+                LibVersion = this.LibVersion,
             };
 
             return sessionKey;
@@ -70,11 +74,12 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
     public IKeyEncapsulationResult Encapsulation(in IKeyEncapsulationPublicKey publicKey)
     {
         ArgumentNullException.ThrowIfNull(publicKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, publicKey.LibVersion);
 
-        publicKey.Value.RequireExactLength(nameof(publicKey), OQS_KEM_HQC_256_LENGTH_PUBLIC_KEY);
+        publicKey.Value.RequireExactLength(nameof(publicKey), OQS_KEM_HQC_192_LENGTH_PUBLIC_KEY);
 
-        var secretSessionKey = new byte[OQS_KEM_HQC_256_LENGTH_CIPHERTEXT];
-        var plainSessionKey = new byte[OQS_KEM_HQC_256_LENGTH_SHARED_SECRET];
+        var secretSessionKey = new byte[OQS_KEM_HQC_192_LENGTH_CIPHERTEXT];
+        var plainSessionKey = new byte[OQS_KEM_HQC_192_LENGTH_SHARED_SECRET];
 
         var apiResult = EncapsMethod(secretSessionKey, plainSessionKey, publicKey.Value);
 
@@ -83,8 +88,9 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
             var sessionKey = new KeyEncapsulationResult
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
-                KeyEncapsulationCiphertext = new KeyEncapsulationCiphertext(this.KeyEncapsulationAlgorithm, secretSessionKey),
-                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, plainSessionKey),
+                KeyEncapsulationCiphertext = new KeyEncapsulationCiphertext(this.KeyEncapsulationAlgorithm, this.LibVersion, secretSessionKey),
+                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKey),
+                LibVersion = this.LibVersion,
             };
 
             return sessionKey;
@@ -95,8 +101,8 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
 
     public IKeyEncapsulationKeyPair GenerateKeyPair()
     {
-        var publicKey = new byte[OQS_KEM_HQC_256_LENGTH_PUBLIC_KEY];
-        var privateKey = new byte[OQS_KEM_HQC_256_LENGTH_SECRET_KEY];
+        var publicKey = new byte[OQS_KEM_HQC_192_LENGTH_PUBLIC_KEY];
+        var privateKey = new byte[OQS_KEM_HQC_192_LENGTH_SECRET_KEY];
 
         var apiResult = GenerateKeypairMethod(publicKey, privateKey);
 
@@ -105,8 +111,9 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
             var keyPair = new KeyEncapsulationKeyPair
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
-                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, publicKey),
-                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, privateKey),
+                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, this.LibVersion, publicKey),
+                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, this.LibVersion, privateKey),
+                LibVersion = this.LibVersion,
             };
 
             return keyPair;
@@ -117,25 +124,25 @@ internal sealed class Hqc256Provider : IKeyEncapsulationProvider
 
     private static class Linux
     {
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_192_decaps(byte[] plainSessionKey, byte[] secretSessionKey, byte[] privateKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_192_encaps(byte[] secretSessionKey, byte[] plainSessionKey, byte[] publicKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_192_keypair(byte[] publicKey, byte[] privateKey);
     }
 
     private static class Windows
     {
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_192_decaps(byte[] plainSessionKey, byte[] secretSessionKey, byte[] privateKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_192_encaps(byte[] secretSessionKey, byte[] plainSessionKey, byte[] publicKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_KEM_hqc_192_keypair(byte[] publicKey, byte[] privateKey);
     }
 }

@@ -1,38 +1,39 @@
-﻿namespace PQCrypto.IO.Internal.Cryptography;
+﻿namespace PQCrypto.IO.Internal.Cryptography.libopq_0_15_0_1;
 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using PQCrypto.IO.Extensions;
 
-internal sealed class FalconPadded1024Provider : IDigitalSignatureProvider
+internal sealed class FalconPadded512Provider : IDigitalSignatureProvider
 {
     private static readonly GenerateKeypair GenerateKeypairMethod;
 
-    private static readonly int OQS_SIG_FALCON_CRYPTO_BYTES = 1280;
-    private static readonly int OQS_SIG_FALCON_CRYPTO_PUBLICKEYBYTES = 1793;
-    private static readonly int OQS_SIG_FALCON_CRYPTO_SECRETKEYBYTES = 2305;
+    private static readonly int OQS_SIG_FALCON_CRYPTO_BYTES = 666;
+    private static readonly int OQS_SIG_FALCON_CRYPTO_PUBLICKEYBYTES = 897;
+    private static readonly int OQS_SIG_FALCON_CRYPTO_SECRETKEYBYTES = 1281;
 
     private static readonly Sign SignMethod;
     private static readonly Verify VerifyMethod;
 
-    public DigitalSignatureAlgorithm DigitalSignatureAlgorithm { get; } = DigitalSignatureAlgorithm.FalconPadded1024;
+    public DigitalSignatureAlgorithm DigitalSignatureAlgorithm { get; } = DigitalSignatureAlgorithm.FalconPadded512;
+    public LibVersion LibVersion { get; } = LibVersion.libopq_0_15_0_1;
 
-    static FalconPadded1024Provider()
+    static FalconPadded512Provider()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            GenerateKeypairMethod = Windows.OQS_SIG_falcon_padded_1024_keypair;
-            SignMethod = Windows.OQS_SIG_falcon_padded_1024_sign;
-            VerifyMethod = Windows.OQS_SIG_falcon_padded_1024_verify;
+            GenerateKeypairMethod = Windows.OQS_SIG_falcon_padded_512_keypair;
+            SignMethod = Windows.OQS_SIG_falcon_padded_512_sign;
+            VerifyMethod = Windows.OQS_SIG_falcon_padded_512_verify;
 
             return;
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            GenerateKeypairMethod = Linux.OQS_SIG_falcon_padded_1024_keypair;
-            SignMethod = Linux.OQS_SIG_falcon_padded_1024_sign;
-            VerifyMethod = Linux.OQS_SIG_falcon_padded_1024_verify;
+            GenerateKeypairMethod = Linux.OQS_SIG_falcon_padded_512_keypair;
+            SignMethod = Linux.OQS_SIG_falcon_padded_512_sign;
+            VerifyMethod = Linux.OQS_SIG_falcon_padded_512_verify;
 
             return;
         }
@@ -52,8 +53,9 @@ internal sealed class FalconPadded1024Provider : IDigitalSignatureProvider
             var keyPair = new DigitalSignatureKeyPair
             {
                 DigitalSignatureAlgorithm = this.DigitalSignatureAlgorithm,
-                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey),
-                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey),
+                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey, this.LibVersion),
+                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey, this.LibVersion),
+                LibVersion = this.LibVersion,
             };
 
             return keyPair;
@@ -66,6 +68,7 @@ internal sealed class FalconPadded1024Provider : IDigitalSignatureProvider
     {
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(privateKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, privateKey.LibVersion);
 
         privateKey.Value.RequireExactLength(nameof(privateKey), OQS_SIG_FALCON_CRYPTO_SECRETKEYBYTES);
 
@@ -85,7 +88,7 @@ internal sealed class FalconPadded1024Provider : IDigitalSignatureProvider
             throw new CryptographicException($"{this.DigitalSignatureAlgorithm} produced oversized signature: {signature.Length} bytes");
         }
 
-        var result = new DigitalSignature(signature);
+        var result = new DigitalSignature(this.DigitalSignatureAlgorithm, this.LibVersion, signature);
 
         return result;
     }
@@ -95,6 +98,8 @@ internal sealed class FalconPadded1024Provider : IDigitalSignatureProvider
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(digitalSignature);
         ArgumentNullException.ThrowIfNull(publicKey);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, digitalSignature.LibVersion);
+        VersionMismatchException.ThrowIfVersionMismatch(this.LibVersion, publicKey.LibVersion);
 
         publicKey.Value.RequireExactLength(nameof(publicKey), OQS_SIG_FALCON_CRYPTO_PUBLICKEYBYTES);
 
@@ -118,25 +123,25 @@ internal sealed class FalconPadded1024Provider : IDigitalSignatureProvider
 
     private static class Linux
     {
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_padded_1024_keypair(byte[] publicKey, byte[] secretKey);
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int OQS_SIG_falcon_padded_512_keypair(byte[] publicKey, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_padded_1024_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int OQS_SIG_falcon_padded_512_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.LINUX_PATH, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_padded_1024_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
+        [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int OQS_SIG_falcon_padded_512_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
     }
 
     private static class Windows
     {
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_padded_1024_keypair(byte[] publicKey, byte[] secretKey);
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int OQS_SIG_falcon_padded_512_keypair(byte[] publicKey, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_padded_1024_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int OQS_SIG_falcon_padded_512_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
 
-        [DllImport(NativeLibraryPath.WINDOWS_PATH, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_padded_1024_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
+        [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int OQS_SIG_falcon_padded_512_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
     }
 }
