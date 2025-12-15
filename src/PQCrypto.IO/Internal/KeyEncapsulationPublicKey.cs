@@ -6,7 +6,7 @@ public sealed record class KeyEncapsulationPublicKey : IKeyEncapsulationPublicKe
     public LibVersion LibVersion { get; }
     public byte[] Value { get; }
 
-    public KeyEncapsulationPublicKey(KeyEncapsulationAlgorithm keyEncapsulationAlgorithm, LibVersion libVersion, byte[] value)
+    public KeyEncapsulationPublicKey(KeyEncapsulationAlgorithm keyEncapsulationAlgorithm, byte[] value, LibVersion libVersion)
     {
         this.KeyEncapsulationAlgorithm = keyEncapsulationAlgorithm;
         this.LibVersion = libVersion;

@@ -113,8 +113,8 @@ internal sealed class ClassicMcEliece6960119Provider : IKeyEncapsulationProvider
             var result = new KeyEncapsulationKeyPair
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
-                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, this.LibVersion, privateKey),
-                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, this.LibVersion, publicKey),
+                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, privateKey, this.LibVersion),
+                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, publicKey, this.LibVersion),
                 LibVersion = this.LibVersion,
             };
 
