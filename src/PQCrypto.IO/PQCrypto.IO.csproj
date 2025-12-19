@@ -21,7 +21,9 @@
 
 	<Platforms>x64</Platforms>
 	<RootNamespace>$(MSBuildProjectName.Replace(" ", "_").Replace("-",""))</RootNamespace>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <!--
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  -->
   </PropertyGroup>
 
   <ItemGroup>
