@@ -6,7 +6,7 @@ public sealed record class DigitalSignaturePrivateKey : IDigitalSignaturePrivate
     public LibVersion LibVersion { get; }
     public byte[] Value { get; }
 
-    public DigitalSignaturePrivateKey(DigitalSignatureAlgorithm algorithmVariant, byte[] value, LibVersion libVersion)
+    public DigitalSignaturePrivateKey(DigitalSignatureAlgorithm algorithmVariant, LibVersion libVersion, byte[] value)
     {
         this.DigitalSignatureAlgorithm = algorithmVariant;
         this.LibVersion = libVersion;

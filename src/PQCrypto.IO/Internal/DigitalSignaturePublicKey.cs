@@ -6,7 +6,7 @@ public sealed record class DigitalSignaturePublicKey : IDigitalSignaturePublicKe
     public LibVersion LibVersion { get; }
     public byte[] Value { get; }
 
-    public DigitalSignaturePublicKey(DigitalSignatureAlgorithm algorithmVariant, byte[] value, LibVersion libVersion)
+    public DigitalSignaturePublicKey(DigitalSignatureAlgorithm algorithmVariant, LibVersion libVersion, byte[] value)
     {
         this.DigitalSignatureAlgorithm = algorithmVariant;
         this.LibVersion = libVersion;

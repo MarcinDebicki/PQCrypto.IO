@@ -111,8 +111,8 @@ internal sealed class Hqc192Provider : IKeyEncapsulationProvider
             var keyPair = new KeyEncapsulationKeyPair
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
-                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, publicKey, this.LibVersion),
-                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, privateKey, this.LibVersion),
+                PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, this.LibVersion, publicKey),
+                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, this.LibVersion, privateKey),
                 LibVersion = this.LibVersion,
             };
 

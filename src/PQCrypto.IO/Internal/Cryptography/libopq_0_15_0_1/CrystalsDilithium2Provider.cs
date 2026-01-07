@@ -55,8 +55,8 @@ internal sealed class CrystalsDilithium2Provider : IDigitalSignatureProvider
             var keyPair = new DigitalSignatureKeyPair
             {
                 DigitalSignatureAlgorithm = this.DigitalSignatureAlgorithm,
-                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, publicKey, this.LibVersion),
-                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, privateKey, this.LibVersion),
+                PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, this.LibVersion, publicKey),
+                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, this.LibVersion, privateKey),
                 LibVersion = this.LibVersion,
             };
 
