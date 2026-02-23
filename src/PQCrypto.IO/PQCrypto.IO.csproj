@@ -21,6 +21,7 @@
 
 	<Platforms>x64</Platforms>
 	<RootNamespace>$(MSBuildProjectName.Replace(" ", "_").Replace("-",""))</RootNamespace>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <!--
 	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	  -->
