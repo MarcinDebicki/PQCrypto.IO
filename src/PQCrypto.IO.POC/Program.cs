@@ -25,8 +25,11 @@ internal class Program
         var verify = crystalsDilithium2Provider.Verify(message, signature, publicKey);
 
         //Post mortem
+        // Access to Pointer && AsSpan() requires locking the MemorySafe object
+        using var use1 = privateKey.Value.Acquire();
+
         Console.WriteLine("--CrystalsDilithium2-------------------");
-        Console.WriteLine($"Private Key: {BitConverter.ToString(privateKey.Value).ToUpper()}");
+        Console.WriteLine($"Private Key: {BitConverter.ToString(privateKey.Value.AsSpan().ToArray()).ToUpper()}");
         Console.WriteLine($"Public Key: {BitConverter.ToString(publicKey.Value).ToUpper()}");
         Console.WriteLine($"Message: {BitConverter.ToString(message.Value).ToUpper()}");
         Console.WriteLine($"Signature: {BitConverter.ToString(signature.Value).ToUpper()}");
@@ -47,13 +50,29 @@ internal class Program
         var keyEncapsulationResult = crystalsKyber512Provider.Encapsulation(publicKey);
         var ciphertext = keyEncapsulationResult.KeyEncapsulationCiphertext;
         var keyDecapsulationResult = crystalsKyber512Provider.Decapsulation(ciphertext, privateKey);
-        var verify = keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.SequenceEqual(keyEncapsulationResult.KeyEncapsulationSharedSecret.Value);
 
         //Post mortem
+        byte[] array1;
+        byte[] array2;
+
+        // Access to Pointer && AsSpan() requires locking the MemorySafe object
+        using (keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.Acquire())
+        using (keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.Acquire())
+        {
+            array1 = keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().ToArray();
+            array2 = keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().ToArray();
+        }
+
+        var verify = array1.SequenceEqual(array2);
+
+        // Access to Pointer && AsSpan() requires locking the MemorySafe object
+        using var @use1 = privateKey.Value.Acquire();
+        using var @use2 = keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.Acquire();
+
         Console.WriteLine("--CrystalsKyber512-------------------");
-        Console.WriteLine($"Private Key: {BitConverter.ToString(privateKey.Value).ToUpper()}");
+        Console.WriteLine($"Private Key: {BitConverter.ToString(privateKey.Value.AsSpan().ToArray()).ToUpper()}");
         Console.WriteLine($"Public Key: {BitConverter.ToString(publicKey.Value).ToUpper()}");
-        Console.WriteLine($"Shared Secret: {BitConverter.ToString(keyEncapsulationResult.KeyEncapsulationSharedSecret.Value).ToUpper()}");
+        Console.WriteLine($"Shared Secret: {BitConverter.ToString(keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().ToArray()).ToUpper()}");
         Console.WriteLine($"Ciphertext: {BitConverter.ToString(ciphertext.Value).ToUpper()}");
         Console.WriteLine($"Decryption correctness: {verify}");
     }

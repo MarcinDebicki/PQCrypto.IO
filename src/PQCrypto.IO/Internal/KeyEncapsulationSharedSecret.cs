@@ -4,9 +4,9 @@ public sealed record class KeyEncapsulationSharedSecret : IKeyEncapsulationShare
 {
     public KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; }
     public LibVersion LibVersion { get; }
-    public byte[] Value { get; }
+    public MemorySafe Value { get; }
 
-    public KeyEncapsulationSharedSecret(KeyEncapsulationAlgorithm keyEncapsulationAlgorithm, LibVersion libVersion, byte[] value)
+    public KeyEncapsulationSharedSecret(KeyEncapsulationAlgorithm keyEncapsulationAlgorithm, LibVersion libVersion, MemorySafe value)
     {
         this.KeyEncapsulationAlgorithm = keyEncapsulationAlgorithm;
         this.LibVersion = libVersion;

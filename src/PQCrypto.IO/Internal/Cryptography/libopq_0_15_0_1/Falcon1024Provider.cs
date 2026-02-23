@@ -44,17 +44,21 @@ internal sealed class Falcon1024Provider : IDigitalSignatureProvider
     public IDigitalSignatureKeyPair GenerateKeyPair()
     {
         var publicKey = new byte[OQS_SIG_FALCON_CRYPTO_PUBLICKEYBYTES];
-        var privateKey = new byte[OQS_SIG_FALCON_CRYPTO_SECRETKEYBYTES];
+        var privateKeyMemorySafe = ProtectMemoryManager.Instance.Rent(OQS_SIG_FALCON_CRYPTO_SECRETKEYBYTES);
+        var apiResult = -1;
 
-        var result = GenerateKeypairMethod(publicKey, privateKey);
+        using (privateKeyMemorySafe.Acquire())
+        {
+            apiResult = GenerateKeypairMethod(publicKey, privateKeyMemorySafe.Pointer);
+        }
 
-        if (result is 0)
+        if (apiResult is 0)
         {
             var keyPair = new DigitalSignatureKeyPair
             {
                 DigitalSignatureAlgorithm = this.DigitalSignatureAlgorithm,
                 PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, this.LibVersion, publicKey),
-                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, this.LibVersion, privateKey),
+                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, this.LibVersion, privateKeyMemorySafe),
                 LibVersion = this.LibVersion,
             };
 
@@ -75,8 +79,13 @@ internal sealed class Falcon1024Provider : IDigitalSignatureProvider
         var signature = new byte[OQS_SIG_FALCON_CRYPTO_BYTES];
         var signatureLen = new nuint(0);
         var messageLen = new nuint((uint)message.Value.Length);
+        var privateKeyMemorySafe = privateKey.Value;
+        var apiResult = -1;
 
-        var apiResult = SignMethod(signature, ref signatureLen, message.Value, messageLen, privateKey.Value);
+        using (privateKeyMemorySafe.Acquire())
+        {
+            apiResult = SignMethod(signature, ref signatureLen, message.Value, messageLen, privateKeyMemorySafe.Pointer);
+        }
 
         if (apiResult != 0)
         {
@@ -127,10 +136,10 @@ internal sealed class Falcon1024Provider : IDigitalSignatureProvider
     private static class Linux
     {
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_1024_keypair(byte[] publicKey, byte[] secretKey);
+        internal static extern int OQS_SIG_falcon_1024_keypair(byte[] publicKey, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_1024_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
+        internal static extern int OQS_SIG_falcon_1024_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_falcon_1024_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
@@ -139,10 +148,10 @@ internal sealed class Falcon1024Provider : IDigitalSignatureProvider
     private static class Windows
     {
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_1024_keypair(byte[] publicKey, byte[] secretKey);
+        internal static extern int OQS_SIG_falcon_1024_keypair(byte[] publicKey, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_falcon_1024_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
+        internal static extern int OQS_SIG_falcon_1024_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_falcon_1024_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);

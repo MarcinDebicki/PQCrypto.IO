@@ -17,6 +17,17 @@ internal static class ByteArrayExtensions
         throw new WrongByteArrayLengthException(field, expectedLength);
     }
 
+    [StackTraceHidden]
+    public static void RequireExactLength(this MemorySafe value, string field, int expectedLength)
+    {
+        if (value.Length == expectedLength)
+        {
+            return;
+        }
+
+        throw new WrongByteArrayLengthException(field, expectedLength);
+    }
+
     #region locking and unlocking for byte arrays
 
     public static GCHandle? LockInRam(this byte[] data)

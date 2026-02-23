@@ -44,9 +44,13 @@ internal sealed class CrystalsDilithium5Provider : IDigitalSignatureProvider
     public IDigitalSignatureKeyPair GenerateKeyPair()
     {
         var publicKey = new byte[OQS_SIG_DILITHIUM_5_LENGTH_PUBLIC_KEY];
-        var privateKey = new byte[OQS_SIG_DILITHIUM_5_LENGTH_SECRET_KEY];
+        var privateKeyMemorySafe = ProtectMemoryManager.Instance.Rent(OQS_SIG_DILITHIUM_5_LENGTH_SECRET_KEY);
+        var apiResult = -1;
 
-        var apiResult = GenerateKeypairMethod(publicKey, privateKey);
+        using (privateKeyMemorySafe.Acquire())
+        {
+            apiResult = GenerateKeypairMethod(publicKey, privateKeyMemorySafe.Pointer);
+        }
 
         if (apiResult == 0)
         {
@@ -54,7 +58,7 @@ internal sealed class CrystalsDilithium5Provider : IDigitalSignatureProvider
             {
                 DigitalSignatureAlgorithm = this.DigitalSignatureAlgorithm,
                 PublicKey = new DigitalSignaturePublicKey(this.DigitalSignatureAlgorithm, this.LibVersion, publicKey),
-                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, this.LibVersion, privateKey),
+                PrivateKey = new DigitalSignaturePrivateKey(this.DigitalSignatureAlgorithm, this.LibVersion, privateKeyMemorySafe),
                 LibVersion = this.LibVersion,
             };
 
@@ -75,8 +79,13 @@ internal sealed class CrystalsDilithium5Provider : IDigitalSignatureProvider
         var signature = new byte[OQS_SIG_DILITHIUM_5_LENGTH_SIGNATURE];
         var signatureLen = new nuint(0);
         var messageLen = new nuint((uint)message.Value.Length);
+        var privateKeyMemorySafe = privateKey.Value;
+        var apiResult = -1;
 
-        var apiResult = SignMethod(signature, ref signatureLen, message.Value, messageLen, privateKey.Value);
+        using (privateKeyMemorySafe.Acquire())
+        {
+            apiResult = SignMethod(signature, ref signatureLen, message.Value, messageLen, privateKeyMemorySafe.Pointer);
+        }
 
         if (apiResult != 0)
         {
@@ -125,10 +134,10 @@ internal sealed class CrystalsDilithium5Provider : IDigitalSignatureProvider
     private static class Linux
     {
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_ml_dsa_87_keypair(byte[] publicKey, byte[] secretKey);
+        internal static extern int OQS_SIG_ml_dsa_87_keypair(byte[] publicKey, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_ml_dsa_87_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
+        internal static extern int OQS_SIG_ml_dsa_87_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_87_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);
@@ -137,10 +146,10 @@ internal sealed class CrystalsDilithium5Provider : IDigitalSignatureProvider
     private static class Windows
     {
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_ml_dsa_87_keypair(byte[] publicKey, byte[] secretKey);
+        internal static extern int OQS_SIG_ml_dsa_87_keypair(byte[] publicKey, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_SIG_ml_dsa_87_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, byte[] secretKey);
+        internal static extern int OQS_SIG_ml_dsa_87_sign(byte[] signature, ref nuint signatureLen, byte[] message, nuint messageLen, IntPtr secretKey);
 
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int OQS_SIG_ml_dsa_87_verify(byte[] message, nuint messageLen, byte[] signature, nuint signatureLen, byte[] publicKey);

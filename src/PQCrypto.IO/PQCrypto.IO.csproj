@@ -27,6 +27,10 @@
 	  -->
   </PropertyGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="PQCrypto.IO.Tests" />
+	</ItemGroup>
+
   <ItemGroup>
     <Compile Remove="lib\**" />
     <EmbeddedResource Remove="lib\**" />

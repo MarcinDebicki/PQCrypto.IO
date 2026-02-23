@@ -1,4 +1,4 @@
-﻿namespace PQCrypto.IO.Internal;
+﻿namespace PQCrypto.IO;
 
 public sealed unsafe class MemorySafe : IDisposable
 {
@@ -6,7 +6,7 @@ public sealed unsafe class MemorySafe : IDisposable
     private bool isLocked;
     private int length;
     private ProtectMemory owner;
-    internal IntPtr ptr;
+    internal nint ptr;
     private object synch = new();
 
     public int Length
@@ -22,7 +22,7 @@ public sealed unsafe class MemorySafe : IDisposable
         }
     }
 
-    public IntPtr Pointer
+    public nint Pointer
     {
         get
         {
@@ -40,7 +40,7 @@ public sealed unsafe class MemorySafe : IDisposable
         }
     }
 
-    internal MemorySafe(IntPtr ptr, int length, ProtectMemory owner)
+    internal MemorySafe(nint ptr, int length, ProtectMemory owner)
     {
         this.ptr = ptr;
         this.length = length;
@@ -57,7 +57,7 @@ public sealed unsafe class MemorySafe : IDisposable
         this.disposed = true;
         this.Unlock();
         this.owner?.Free(this);
-        this.ptr = IntPtr.Zero;
+        this.ptr = nint.Zero;
         this.length = 0;
         this.owner = null;
     }
@@ -69,7 +69,7 @@ public sealed unsafe class MemorySafe : IDisposable
         return new Releaser(this);
     }
 
-    public Span<byte> AsSpan()
+    public ReadOnlySpan<byte> AsSpan()
     {
         if (this.disposed)
         {
@@ -78,10 +78,25 @@ public sealed unsafe class MemorySafe : IDisposable
 
         if (this.isLocked is false)
         {
-            throw new InvalidOperationException("The correct usage is Lock() or LockWait() try { call AsSpan();} finally { Unlock(); }");
+            throw new InvalidOperationException("The correct usage is Lock() or LockWait() try { call AsSpan();} finally { Unlock(); } or using use = Acquire()");
         }
 
         return new Span<byte>((void*)this.ptr, this.length);
+    }
+
+    public void Clear()
+    {
+        if (this.disposed)
+        {
+            throw new ObjectDisposedException(nameof(MemorySafe));
+        }
+
+        if (this.isLocked is false)
+        {
+            throw new InvalidOperationException("The correct usage is Lock() or LockWait() try { call AsSpan();} finally { Unlock(); or using use = Acquire() }");
+        }
+
+        new Span<byte>((void*)this.ptr, this.length).Clear();
     }
 
     public bool Lock()

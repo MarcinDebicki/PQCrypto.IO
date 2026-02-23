@@ -140,7 +140,7 @@ public class DigitalSignatureTest
         // Assert
         Assert.That(keyPair, Is.Not.Null);
         Assert.That(keyPair.PublicKey.Value, Is.Not.Null.And.Not.Empty);
-        Assert.That(keyPair.PrivateKey.Value, Is.Not.Null.And.Not.Empty);
+        Assert.That(keyPair.PrivateKey.Value, Is.Not.Null);
 
         Assert.That(keyPair.PublicKey.Value.Length, Is.EqualTo(digitalSignatureParameters.LengthPublicKey));
         Assert.That(keyPair.PrivateKey.Value.Length, Is.EqualTo(digitalSignatureParameters.LengthSecretKey));

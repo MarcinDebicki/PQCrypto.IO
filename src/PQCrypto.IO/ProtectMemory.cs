@@ -1,16 +1,19 @@
-﻿namespace PQCrypto.IO.Internal;
+﻿namespace PQCrypto.IO;
 
 using System.Runtime.InteropServices;
 
 /// <summary>
+///     For Windows, the process must have the "Lock pages in memory" privilege (SeLockMemoryPrivilege) to use this class.
 ///     secedit /export /cfg secedit.cfg
 ///     SeLockMemoryPrivilege=user1,user2,group3
 ///     secedit /configure /db secedit.sdb /cfg secedit.cfg /areas USER_RIGHTS
+///     --
+///     For Linux, the process must have the CAP_IPC_LOCK capability to use this class.
 /// </summary>
 public unsafe class ProtectMemory : IDisposable
 {
     private readonly object sync = new();
-    private IntPtr basePtr;
+    private nint basePtr;
     private bool hibernateActive = false;
     private List<MemoryRegion> regions = new();
     private int totalSize;
@@ -24,7 +27,7 @@ public unsafe class ProtectMemory : IDisposable
         // Platform-agnostic allocation
         this.basePtr = AllocateProtectedMemory(initialSize);
 
-        if (this.basePtr == IntPtr.Zero)
+        if (this.basePtr == nint.Zero)
         {
             throw new OutOfMemoryException("Cannot allocate protected memory.");
         }
@@ -48,25 +51,82 @@ public unsafe class ProtectMemory : IDisposable
         }
         else if (OperatingSystem.IsLinux())
         {
-            munmap(this.basePtr, (UIntPtr)this.totalSize);
+            munmap(this.basePtr, (nuint)this.totalSize);
         }
 
-        this.basePtr = IntPtr.Zero;
+        this.basePtr = nint.Zero;
     }
 
-    public MemorySafe Allocate(int size)
+    public void ClearAllBuffers()
+    {
+        this.hibernateActive = true;
+        List<MemorySafe> toZero = new();
+
+        foreach (var region in this.regions)
+        {
+            if (!region.Free && region.Owner.Lock())
+            {
+                toZero.Add(region.Owner);
+            }
+        }
+
+        lock (this.sync)
+        {
+            foreach (var region in this.regions)
+            {
+                if (!region.Free && !toZero.Contains(region.Owner))
+                {
+                    region.Owner.LockWait();
+                    toZero.Add(region.Owner);
+                }
+            }
+        }
+
+        foreach (var mem in toZero)
+        {
+            mem.Clear();
+        }
+    }
+
+    public void Free(MemorySafe mem)
+    {
+        lock (this.sync)
+        {
+            var index = this.regions.FindIndex(r => r.Owner == mem);
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            var region = this.regions[index];
+
+            region.Free = true;
+            region.Owner = null;
+
+            new Span<byte>((void*)region.Ptr, region.Size).Clear();
+
+            this.usedSize -= region.Size;
+
+            this.regions[index] = region;
+
+            this.MergeAdjacent(index);
+        }
+    }
+
+    public MemorySafe Rent(int size)
     {
         var bytes = new byte[size];
 
-        return this.Allocate(bytes);
+        return this.Rent(bytes);
     }
 
-    public MemorySafe Allocate(byte[] buffer)
+    public MemorySafe Rent(byte[] buffer)
     {
-        return this.Allocate(new Span<byte>(buffer));
+        return this.Rent(new Span<byte>(buffer));
     }
 
-    public MemorySafe Allocate(Span<byte> buffer)
+    public MemorySafe Rent(Span<byte> buffer)
     {
         if (this.hibernateActive is true)
         {
@@ -117,63 +177,6 @@ public unsafe class ProtectMemory : IDisposable
             this.usedSize += region.Size;
 
             return mem;
-        }
-    }
-
-    public void ClearAllBuffers()
-    {
-        this.hibernateActive = true;
-        List<MemorySafe> toZero = new();
-
-        foreach (var region in this.regions)
-        {
-            if (!region.Free && region.Owner.Lock())
-            {
-                toZero.Add(region.Owner);
-            }
-        }
-
-        lock (this.sync)
-        {
-            foreach (var region in this.regions)
-            {
-                if (!region.Free && !toZero.Contains(region.Owner))
-                {
-                    region.Owner.LockWait();
-                    toZero.Add(region.Owner);
-                }
-            }
-        }
-
-        foreach (var mem in toZero)
-        {
-            mem.AsSpan().Clear();
-        }
-    }
-
-    public void Free(MemorySafe mem)
-    {
-        lock (this.sync)
-        {
-            var index = this.regions.FindIndex(r => r.Owner == mem);
-
-            if (index < 0)
-            {
-                return;
-            }
-
-            var region = this.regions[index];
-
-            region.Free = true;
-            region.Owner = null;
-
-            new Span<byte>((void*)region.Ptr, region.Size).Clear();
-
-            this.usedSize -= region.Size;
-
-            this.regions[index] = region;
-
-            this.MergeAdjacent(index);
         }
     }
 
@@ -258,7 +261,7 @@ public unsafe class ProtectMemory : IDisposable
 
     private struct MemoryRegion
     {
-        public IntPtr Ptr;
+        public nint Ptr;
         public int Size;
         public bool Free;
         public MemorySafe Owner;
@@ -293,7 +296,7 @@ public unsafe class ProtectMemory : IDisposable
 
     #region Platform-specific memory allocation
 
-    private static IntPtr AllocateProtectedMemory(int size)
+    private static nint AllocateProtectedMemory(int size)
     {
         if (OperatingSystem.IsWindows())
         {
@@ -310,19 +313,19 @@ public unsafe class ProtectMemory : IDisposable
     }
 
     // Windows
-    private static IntPtr AllocateWindows(int size)
+    private static nint AllocateWindows(int size)
     {
         const uint MEM_COMMIT = 0x1000;
         const uint MEM_RESERVE = 0x2000;
         const uint PAGE_READWRITE = 0x04;
 
-        var ptr = VirtualAlloc(IntPtr.Zero, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        var ptr = VirtualAlloc(nint.Zero, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-        if (ptr == IntPtr.Zero)
+        if (ptr == nint.Zero)
         {
             Console.WriteLine("Nie przydzieliło pamięci");
 
-            return IntPtr.Zero;
+            return nint.Zero;
         }
 
         if (!VirtualLock(ptr, size))
@@ -330,32 +333,32 @@ public unsafe class ProtectMemory : IDisposable
             Console.WriteLine("Nie zablokowało pamięci");
             VirtualFree(ptr, dwSize: 0, dwFreeType: 0x8000 /* MEM_RELEASE */);
 
-            return IntPtr.Zero;
+            return nint.Zero;
         }
 
         return ptr;
     }
 
     // Linux
-    private static IntPtr AllocateLinux(int size)
+    private static nint AllocateLinux(int size)
     {
         const int PROT_READ = 0x1;
         const int PROT_WRITE = 0x2;
         const int MAP_PRIVATE = 0x02;
         const int MAP_ANONYMOUS = 0x20;
 
-        var ptr = mmap(IntPtr.Zero, (UIntPtr)size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, fd: -1, offset: 0);
+        var ptr = mmap(nint.Zero, (nuint)size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, fd: -1, offset: 0);
 
-        if (ptr == new IntPtr(-1))
+        if (ptr == new nint(-1))
         {
-            return IntPtr.Zero;
+            return nint.Zero;
         }
 
-        if (mlock(ptr, (UIntPtr)size) != 0)
+        if (mlock(ptr, (nuint)size) != 0)
         {
-            munmap(ptr, (UIntPtr)size);
+            munmap(ptr, (nuint)size);
 
-            return IntPtr.Zero;
+            return nint.Zero;
         }
 
         return ptr;
@@ -364,31 +367,31 @@ public unsafe class ProtectMemory : IDisposable
     #region WinAPI
 
     [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr VirtualAlloc(IntPtr lpAddress, int dwSize, uint flAllocationType, uint flProtect);
+    private static extern nint VirtualAlloc(nint lpAddress, int dwSize, uint flAllocationType, uint flProtect);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool VirtualLock(IntPtr lpAddress, int dwSize);
+    private static extern bool VirtualLock(nint lpAddress, int dwSize);
 
     [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool VirtualFree(IntPtr lpAddress, int dwSize, uint dwFreeType);
+    private static extern bool VirtualFree(nint lpAddress, int dwSize, uint dwFreeType);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool VirtualUnlock(IntPtr lpAddress, int dwSize);
+    private static extern bool VirtualUnlock(nint lpAddress, int dwSize);
 
     #endregion
 
     #region Linux native
 
     [DllImport("libc", SetLastError = true)]
-    private static extern IntPtr mmap(IntPtr addr, UIntPtr length, int prot, int flags, int fd, long offset);
+    private static extern nint mmap(nint addr, nuint length, int prot, int flags, int fd, long offset);
 
     [DllImport("libc", SetLastError = true)]
-    private static extern int mlock(IntPtr addr, UIntPtr len);
+    private static extern int mlock(nint addr, nuint len);
 
     [DllImport("libc", SetLastError = true)]
-    private static extern int munmap(IntPtr addr, UIntPtr length);
+    private static extern int munmap(nint addr, nuint length);
 
     #endregion
 

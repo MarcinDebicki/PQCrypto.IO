@@ -51,9 +51,15 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
         keyEncapsulationCiphertext.Value.RequireExactLength(nameof(keyEncapsulationCiphertext), OQS_KEM_KYBER_512_LENGTH_CIPHERTEXT);
         keyEncapsulationPrivateKey.Value.RequireExactLength(nameof(keyEncapsulationPrivateKey), OQS_KEM_KYBER_512_LENGTH_SECRET_KEY);
 
-        var plainSessionKey = new byte[OQS_KEM_KYBER_512_LENGTH_SHARED_SECRET];
+        var plainSessionKeyMemorySafe = ProtectMemoryManager.Instance.Rent(OQS_KEM_KYBER_512_LENGTH_SHARED_SECRET);
+        var privateKeyMemorySafe = keyEncapsulationPrivateKey.Value;
+        var apiResult = -1;
 
-        var apiResult = DecapsMethod(plainSessionKey, keyEncapsulationCiphertext.Value, keyEncapsulationPrivateKey.Value);
+        using (plainSessionKeyMemorySafe.Acquire())
+        using (privateKeyMemorySafe.Acquire())
+        {
+            apiResult = DecapsMethod(plainSessionKeyMemorySafe.Pointer, keyEncapsulationCiphertext.Value, privateKeyMemorySafe.Pointer);
+        }
 
         if (apiResult == 0)
         {
@@ -61,7 +67,7 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
                 KeyEncapsulationCiphertext = keyEncapsulationCiphertext,
-                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKey),
+                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKeyMemorySafe),
                 LibVersion = this.LibVersion,
             };
 
@@ -79,9 +85,13 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
         publicKey.Value.RequireExactLength(nameof(publicKey), OQS_KEM_KYBER_512_LENGTH_PUBLIC_KEY);
 
         var secretSessionKey = new byte[OQS_KEM_KYBER_512_LENGTH_CIPHERTEXT];
-        var plainSessionKey = new byte[OQS_KEM_KYBER_512_LENGTH_SHARED_SECRET];
+        var plainSessionKeyMemorySafe = ProtectMemoryManager.Instance.Rent(OQS_KEM_KYBER_512_LENGTH_SHARED_SECRET);
+        var apiResult = -1;
 
-        var apiResult = EncapsMethod(secretSessionKey, plainSessionKey, publicKey.Value);
+        using (plainSessionKeyMemorySafe.Acquire())
+        {
+            apiResult = EncapsMethod(secretSessionKey, plainSessionKeyMemorySafe.Pointer, publicKey.Value);
+        }
 
         if (apiResult == 0)
         {
@@ -89,7 +99,7 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
                 KeyEncapsulationCiphertext = new KeyEncapsulationCiphertext(this.KeyEncapsulationAlgorithm, this.LibVersion, secretSessionKey),
-                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKey),
+                KeyEncapsulationSharedSecret = new KeyEncapsulationSharedSecret(this.KeyEncapsulationAlgorithm, this.LibVersion, plainSessionKeyMemorySafe),
                 LibVersion = this.LibVersion,
             };
 
@@ -102,9 +112,13 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
     public IKeyEncapsulationKeyPair GenerateKeyPair()
     {
         var publicKey = new byte[OQS_KEM_KYBER_512_LENGTH_PUBLIC_KEY];
-        var privateKey = new byte[OQS_KEM_KYBER_512_LENGTH_SECRET_KEY];
+        var privateKeyMemorySafe = ProtectMemoryManager.Instance.Rent(OQS_KEM_KYBER_512_LENGTH_SECRET_KEY);
+        var apiResult = -1;
 
-        var apiResult = GenerateKeypairMethod(publicKey, privateKey);
+        using (privateKeyMemorySafe.Acquire())
+        {
+            apiResult = GenerateKeypairMethod(publicKey, privateKeyMemorySafe.Pointer);
+        }
 
         if (apiResult == 0)
         {
@@ -112,7 +126,7 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
             {
                 KeyEncapsulationAlgorithm = this.KeyEncapsulationAlgorithm,
                 PublicKey = new KeyEncapsulationPublicKey(this.KeyEncapsulationAlgorithm, this.LibVersion, publicKey),
-                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, this.LibVersion, privateKey),
+                PrivateKey = new KeyEncapsulationPrivateKey(this.KeyEncapsulationAlgorithm, this.LibVersion, privateKeyMemorySafe),
                 LibVersion = this.LibVersion,
             };
 
@@ -125,24 +139,24 @@ internal sealed class CrystalsKyber512Provider : IKeyEncapsulationProvider
     private static class Linux
     {
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_KEM_ml_kem_512_decaps(byte[] plainSessionKey, byte[] secretSessionKey, byte[] privateKey);
+        internal static extern int OQS_KEM_ml_kem_512_decaps(IntPtr plainSessionKey, byte[] secretSessionKey, IntPtr privateKey);
 
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_KEM_ml_kem_512_encaps(byte[] secretSessionKey, byte[] plainSessionKey, byte[] publicKey);
+        internal static extern int OQS_KEM_ml_kem_512_encaps(byte[] secretSessionKey, IntPtr plainSessionKey, byte[] publicKey);
 
         [DllImport(NativeLibraryPath.LINUX_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_KEM_ml_kem_512_keypair(byte[] publicKey, byte[] privateKey);
+        internal static extern int OQS_KEM_ml_kem_512_keypair(byte[] publicKey, IntPtr privateKey);
     }
 
     private static class Windows
     {
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_KEM_ml_kem_512_decaps(byte[] plainSessionKey, byte[] secretSessionKey, byte[] privateKey);
+        internal static extern int OQS_KEM_ml_kem_512_decaps(IntPtr plainSessionKey, byte[] secretSessionKey, IntPtr privateKey);
 
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_KEM_ml_kem_512_encaps(byte[] secretSessionKey, byte[] plainSessionKey, byte[] publicKey);
+        internal static extern int OQS_KEM_ml_kem_512_encaps(byte[] secretSessionKey, IntPtr plainSessionKey, byte[] publicKey);
 
         [DllImport(NativeLibraryPath.WINDOWS_PATH_0_15_0_1, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int OQS_KEM_ml_kem_512_keypair(byte[] publicKey, byte[] privateKey);
+        internal static extern int OQS_KEM_ml_kem_512_keypair(byte[] publicKey, IntPtr privateKey);
     }
 }
