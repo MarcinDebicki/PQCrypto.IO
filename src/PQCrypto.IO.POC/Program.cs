@@ -25,15 +25,26 @@ internal class Program
         var verify = crystalsDilithium2Provider.Verify(message, signature, publicKey);
 
         //Post mortem
+
+        //Safe to use stackalloc here since the buffer is only used within this method and does not escape its scope
+        Span<byte> privateKeyBuffer = stackalloc byte[privateKey.Value.Length];
+
         // Access to Pointer && AsSpan() requires locking the MemorySafe object
-        using var use1 = privateKey.Value.Acquire();
+        using (privateKey.Value.Acquire())
+        {
+            privateKey.Value.AsSpan().CopyTo(privateKeyBuffer);
+        }
 
         Console.WriteLine("--CrystalsDilithium2-------------------");
-        Console.WriteLine($"Private Key: {BitConverter.ToString(privateKey.Value.AsSpan().ToArray()).ToUpper()}");
+        // Using Span.ToArray() is not very correct, but it is sufficient for demonstration purposes.
+        Console.WriteLine($"Private Key: {BitConverter.ToString(privateKeyBuffer.ToArray()).ToUpper()}");
         Console.WriteLine($"Public Key: {BitConverter.ToString(publicKey.Value).ToUpper()}");
         Console.WriteLine($"Message: {BitConverter.ToString(message.Value).ToUpper()}");
         Console.WriteLine($"Signature: {BitConverter.ToString(signature.Value).ToUpper()}");
         Console.WriteLine($"Signature correctness: {verify}");
+
+        // Clear the private key buffer from memory
+        privateKeyBuffer.Clear();
     }
 
     private static void KeyEncapsulationMechanism()
@@ -52,18 +63,19 @@ internal class Program
         var keyDecapsulationResult = crystalsKyber512Provider.Decapsulation(ciphertext, privateKey);
 
         //Post mortem
-        byte[] array1;
-        byte[] array2;
+        //Safe to use stackalloc here since the buffer is only used within this method and does not escape its scope
+        Span<byte> keyDecapsulationBuffer = stackalloc byte[keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.Length];
+        Span<byte> keyEncapsulationBuffer = stackalloc byte[keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.Length];
 
         // Access to Pointer && AsSpan() requires locking the MemorySafe object
         using (keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.Acquire())
         using (keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.Acquire())
         {
-            array1 = keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().ToArray();
-            array2 = keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().ToArray();
+            keyDecapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().CopyTo(keyDecapsulationBuffer);
+            keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().CopyTo(keyEncapsulationBuffer);
         }
 
-        var verify = array1.SequenceEqual(array2);
+        var verify = keyDecapsulationBuffer.SequenceEqual(keyEncapsulationBuffer);
 
         // Access to Pointer && AsSpan() requires locking the MemorySafe object
         using var @use1 = privateKey.Value.Acquire();
@@ -75,6 +87,10 @@ internal class Program
         Console.WriteLine($"Shared Secret: {BitConverter.ToString(keyEncapsulationResult.KeyEncapsulationSharedSecret.Value.AsSpan().ToArray()).ToUpper()}");
         Console.WriteLine($"Ciphertext: {BitConverter.ToString(ciphertext.Value).ToUpper()}");
         Console.WriteLine($"Decryption correctness: {verify}");
+
+        // Clear the private key buffer from memory
+        keyDecapsulationBuffer.Clear();
+        keyEncapsulationBuffer.Clear();
     }
 
     private static void Main(string[] args)
