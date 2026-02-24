@@ -11,7 +11,7 @@ Using the library requires preparing an environment in which you can disable swa
 
 Below are instructions for adding permissions to selected accounts/groups. Of course, you must have the appropriate permissions to make such changes.
 
-![Windows lock page in memory](https://github.com/MarcinDebicki/PQCrypto.IO/windows-lock-page-in-memory.png)
+![Windows lock page in memory](https://github.com/MarcinDebicki/PQCrypto.IO/blob/7d9273ce631b7f9223e89c47aac514957133eea2/windows-lock-page-in-memory.png)
 
 ### For production
 
