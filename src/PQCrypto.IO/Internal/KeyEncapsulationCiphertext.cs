@@ -4,7 +4,7 @@ public sealed record class KeyEncapsulationCiphertext : IKeyEncapsulationCiphert
 {
     public KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; }
     public LibVersion LibVersion { get; }
-    public byte[] Value { get; }
+    public byte[] Value { get; set; }
 
     public KeyEncapsulationCiphertext(KeyEncapsulationAlgorithm keyEncapsulationAlgorithm, LibVersion libVersion, byte[] value)
     {

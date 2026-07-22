@@ -1,6 +1,6 @@
 ﻿namespace PQCrypto.IO;
 
-public interface IKeyEncapsulationPrivateKey
+public interface IKeyEncapsulationPrivateKey : IDisposable
 {
     KeyEncapsulationAlgorithm KeyEncapsulationAlgorithm { get; }
     LibVersion LibVersion { get; }
